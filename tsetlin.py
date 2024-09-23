@@ -1,14 +1,83 @@
 # Imports
 import pandas as pd
 from random import random
+import sklearn
+from sklearn.model_selection import train_test_split
+from IPython.display import display
 
 
 # Function to load data
-def load_data():
-    data = Null
+def load_data(data_path):
+    data_df = pd.read_csv(data_path)
 
+    nr_classes = data_df['Survived'].unique()   # Nr of classes to predict
+    
+    # Shuffle data
+    data_df = data_df.sample(frac=1)
+
+    # Train test split 80/20
+    train_df, test_df = train_test_split(data_df, test_size=0.2, random_state=42)
+
+    # Sort training data by classification
+    sorted_train_df = train_df.sort_values(by='Survived')     # Sort by Survived to get the rows for different classes
+
+    # Split test data into x and y
+    x_test = test_df.drop(columns='Survived')   # test data features
+    y_test = test_df['Survived']                # test data classification
+
+    
+    # Training data survived
+    training_data_survived = sorted_train_df[sorted_train_df['Survived'] == 1]
+    print('training_data_survived')
+    display(training_data_survived)
+
+    # Training data not survived 
+    training_data_not_survived = sorted_train_df[sorted_train_df['Survived'] == 0]
+    print('training_data_not_survived')
+    display(training_data_not_survived)
+
+    # Split target from features
+    x_train_survived = training_data_survived.drop(columns='Survived')              # Features data
+    y_train_survived = training_data_survived['Survived']                           # Target data
+
+    # Split target from features
+    x_train_not_survived = training_data_not_survived.drop(columns='Survived')      # Features data
+    y_train_not_survived = training_data_not_survived['Survived']                   # Target data
+    
+    
+    return nr_classes, x_train_survived, x_train_not_survived, x_test, y_test
+
+
+
+# Function to convert dataframe into list of dictionaries
+def format_data_dictionaries(dataframe):
+    data = []
+
+    for _, row in dataframe.iterrows():
+        dictionary = {}
+        # loop over rows and create key-value pairs
+        for col in dataframe.columns:
+            dictionary[col] = bool(row[col])    # Convert binary to bool
+        data.append(dictionary)
+
+    # Returns list of dictionaries
     return data
 
+
+# Create / Initiate rules
+def initiate_rules(nr_rules, example_data_dict):
+    # Turn example_data_dict into a dict with negated values as well
+    dictionary_negated = {}
+    for key, value in example_data_dict.items():
+        dictionary_negated[key] = 5
+        dictionary_negated[f'NOT {key}'] = 5
+
+    rules = []
+    for i in range(nr_rules):
+        rule = Memory(0.8, 0.2, dictionary_negated)
+        rules.append(rule)
+
+    return rules
 
 # Memory class used to store the values of rules
 class Memory:
@@ -43,6 +112,19 @@ class Memory:
             self.memory[literal] += 1
 
 
+# Evaluate condition
+def evaluate_condition(observation, condition):
+    truth_value_of_condition = True
+    for feature in observation:
+        if feature in condition and observation[feature] == False:
+            truth_value_of_condition = False
+            break
+        if 'NOT ' + feature in condition and observation[feature] == True:
+            truth_value_of_condition = False
+            break
+    return truth_value_of_condition
+
+
 # Type i feedback to memorize true assesments and forget remaining literals
 def type_i_feedback(observation, memory):
     remaining_literals = memory.get_literals()
@@ -73,7 +155,27 @@ def type_ii_feedback(observation, memory):
 if __name__ == '__main__':
     print('Start program')
 
-    Nr_rules = 5
+    data_path = 'titanic_binary_dataset.csv'
+
+    nr_classes, x_train_survived, x_train_not_survived, x_test, y_test = load_data(data_path)
+
+    survived_data = format_data_dictionaries(x_train_survived)
+    not_survived_data = format_data_dictionaries(x_train_not_survived)
+
+    print(survived_data[0])
+
+    #rules = initiate_rules(Nr_rules_per_class)
+
+    Nr_of_classes = 2
+    Nr_rules_per_class = 5
     epochs = 100
 
     # Create n rules, and assign the rules to different classes to predict
+    survived_rules = initiate_rules(Nr_rules_per_class, survived_data[0])   # Send in nr of rules and one row of data to create negated rules from
+    not_survived_rules = initiate_rules(Nr_rules_per_class, not_survived_data[0])
+
+    print(survived_rules[0].get_memory())
+
+    # Train rules on data
+    #for i in range(epochs):
+
