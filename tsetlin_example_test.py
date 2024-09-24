@@ -140,7 +140,7 @@ if __name__ == '__main__':
 
     # test the output of the test-rules on some of the data
     print(evaluate_condition(data[1], R1))
-    print(evaluate_condition(data[1],R2))
+    print(evaluate_condition(data[1], R2))
     print(evaluate_condition(data[1], R3))
 
 
