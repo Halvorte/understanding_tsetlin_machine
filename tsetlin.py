@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
     # Train rules on data
     for i in range(epochs):
-        # Loop the survived data over the rules
+        # Loop the survived data over the survived-rules
         for survived_observation in survived_data:
             for survived_rule in survived_rules:
                 evaluation = evaluate_condition(survived_observation, survived_rule.get_condition())
@@ -186,7 +186,26 @@ if __name__ == '__main__':
                     type_i_feedback(survived_observation, survived_rule)
                 else:                   # Wrongly classified entry
                     type_ii_feedback(survived_observation, survived_rule)
+        
+        # Loop the survived data over the not survived-rules
+        for survived_observation in survived_data:
+            for not_survived_rule in not_survived_rules:
+                evaluation = evaluate_condition(survived_observation, not_survived_rule.get_condition())
+                if evaluation == True:  # Correctly classify entry
+                    type_i_feedback(survived_observation, not_survived_rule)
+                else:                   # Wrongly classified entry
+                    type_ii_feedback(survived_observation, not_survived_rule)
 
+        # Loop the not survived data over the survived rules
+        for not_survived_observation in not_survived_data:
+            for survived_rule in survived_rules:
+                evaluation = evaluate_condition(not_survived_observation, survived_rule.get_condition())
+                if evaluation == False:  # Correctly classify entry
+                    type_i_feedback(not_survived_observation, survived_rule)
+                else:                   # Wrongly classified entry
+                    type_ii_feedback(not_survived_observation, survived_rule)
+
+        # Loop the not survived data over the not-survived rules
         for not_survived_observation in not_survived_data:
             for not_survived_rule in not_survived_rules:
                 evaluation = evaluate_condition(not_survived_observation, not_survived_rule.get_condition())
@@ -194,6 +213,7 @@ if __name__ == '__main__':
                     type_i_feedback(not_survived_observation, not_survived_rule)
                 else:                   # Wrongly classified entry
                     type_ii_feedback(not_survived_observation, not_survived_rule)
+
 
     print('test regel etter trening?')
     print(survived_rules[0].get_memory())
@@ -207,3 +227,9 @@ if __name__ == '__main__':
     print('------------------------------')
     print(not_survived_rules[1].get_memory())
     print(not_survived_rules[1].get_condition())
+
+
+    # model inference
+    x_test_data = format_data_dictionaries(x_test)
+
+    #for i in range(len(x_test_data)):
